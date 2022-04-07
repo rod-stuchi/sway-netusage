@@ -1,11 +1,30 @@
-i3status-netusage is an i3status companion that shows the network traffic.
+waybar-netusage is an waybar companion that shows the network traffic.
 
-How to add it to the i3wm config:
+How to add it to the waybar config:
 
-    bar {
-      status_command sh -c 'i3status | i3status-netusage --interface=em1'
-    }
+```json
+"custom/netusage": {
+    "exec": "$HOME/.config/sway/waybar_custom_modules/sway_netusage --interface wlan0"
+    //"on-click": "update-system",
+},
+```
+
+You may specify the interface if autodetection does not work for you:
+```json
+"custom/netusage": {
+  "exec": "$HOME/.config/sway/waybar_custom_modules/sway_netusage --interface wlan0"
+},
+```
+
+style.css
+```css
+#custom-netusage {
+    background-color: #4d4d4d;
+    /*color: #000000;*/
+}
+```
 
 Sample output:
-
-    19.1 KiB/s↓   21.2 KiB/s↑|0.22|2014-08-02 22:51:40
+```
+19.1 MiB/s↓   21.2 MiB/s↑
+```

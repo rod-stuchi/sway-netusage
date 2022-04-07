@@ -65,7 +65,7 @@ func format(counter, prevCounter uint64, window float64) string {
 	if r < 1024*1024 {
 		return fmt.Sprintf("%.0f KiB", r/1024)
 	}
-	return fmt.Sprintf("%.0f MiB", r/1024/1024)
+	return fmt.Sprintf("%.1f MiB", r/1024/1024)
 }
 
 func main() {
