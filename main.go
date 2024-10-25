@@ -3,10 +3,12 @@ package main
 
 import (
 	"bytes"
+	"encoding/json"
 	"flag"
 	"fmt"
-	"io/ioutil"
+	"log"
 	"net"
+	"os"
 	"regexp"
 	"strconv"
 	"strings"
@@ -16,13 +18,22 @@ import (
 )
 
 var (
-	iface = flag.String("interface", "", "What interface to use")
+	iface        = flag.String("interface", "", "What interface to use")
+	showDownload = flag.Bool("down", false, "show download only, upload next line (tooltip)")
+	showUpload   = flag.Bool("up", false, "show upload only, download next line (tooltip)")
 )
+
+type Output struct {
+	Text    string `json:"text"`
+	Alt     string `json:"alt"`
+	Tooltip string `json:"tooltip"`
+	Class   string `json:"class"`
+}
 
 // stats fetches the cumulative rx/tx bytes for network interface
 // iface.
 func stats() (rx, tx uint64) {
-	b, err := ioutil.ReadFile("/proc/net/dev")
+	b, err := os.ReadFile("/proc/net/dev")
 	if err != nil {
 		return 0, 0
 	}
@@ -86,7 +97,41 @@ func main() {
 		rx, tx := stats()
 		rxRate := format(rx, prevRx, window)
 		txRate := format(tx, prevTx, window)
-		fmt.Printf("%8s/s ↓ %8s/s ↑\n", rxRate, txRate)
+		arrowDownFmt := "<span size=\"10.5pt\"> </span>" // ↑
+		arrowUPFmt := "<span size=\"10.5pt\"> </span>"   // ↓
+		if *showDownload {
+			output := Output{
+				Text:    fmt.Sprintf("%8s/s %s", rxRate, arrowDownFmt),
+				Tooltip: fmt.Sprintf("%8s/s %s", txRate, arrowUPFmt),
+			}
+			jsonOutput, err := json.Marshal(output)
+			if err != nil {
+				log.Fatalf("JSON marshaling failed: %s", err)
+			}
+			fmt.Println(string(jsonOutput))
+		}
+		if *showUpload {
+			output := Output{
+				Text:    fmt.Sprintf("%8s/s %s", txRate, arrowDownFmt),
+				Tooltip: fmt.Sprintf("%8s/s %s", rxRate, arrowUPFmt),
+			}
+			jsonOutput, err := json.Marshal(output)
+			if err != nil {
+				log.Fatalf("JSON marshaling failed: %s", err)
+			}
+			fmt.Println(string(jsonOutput))
+		}
+		if !*showDownload && !*showUpload {
+			output := Output{
+				Text:    fmt.Sprintf("%8s/s %s %8s/s %s", rxRate, arrowDownFmt, txRate, arrowUPFmt),
+				Tooltip: fmt.Sprintf("%8s/s %s %8s/s %s", rxRate, arrowDownFmt, txRate, arrowUPFmt),
+			}
+			jsonOutput, err := json.Marshal(output)
+			if err != nil {
+				log.Fatalf("JSON marshaling failed: %s", err)
+			}
+			fmt.Println(string(jsonOutput))
+		}
 		prevRx, prevTx = rx, tx
 	}
 
